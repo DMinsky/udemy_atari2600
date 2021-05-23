@@ -1,0 +1,25 @@
+	processor 6502
+	include "vcs.h"
+
+	seg code
+	org $f000
+
+Start:
+	sei	; Disable interruptions
+	cld	; Disable BCD
+	ldx #$ff
+	txs
+
+YellowLoop:
+	; $1f for yellow color
+	; https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#Atari_2600
+	lda #$1F
+	; COLUBK is TIA register for background color
+	; To get correct color switch your emulator to NTSC
+	sta COLUBK
+	jmp YellowLoop
+
+	org $fffc
+	.word Start
+	.word Start
+
