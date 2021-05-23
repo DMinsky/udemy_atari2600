@@ -1,0 +1,105 @@
+	processor 6502
+        include "vcs.h"
+        include "macro.h"
+
+	seg Code
+        org $f000
+
+Start:
+	CLEAN_START
+        ; Blue for background
+        lda #$80
+        sta COLUBK
+        ; Yellow for playfield
+        lda #$1F
+        sta COLUPF
+
+NextFrame:
+	lda #2
+        sta VSYNC
+        sta VBLANK
+        
+        ; Wait for VSYNC
+       	sta WSYNC
+        sta WSYNC
+        sta WSYNC
+        lda #0
+        sta VSYNC
+        
+        ; Wait for VBLANK
+        REPEAT 37
+        	sta WSYNC
+        REPEND
+        sta VBLANK
+        
+        ; Setup playfield
+        ldx #%00000001	; CTRLPF register (set D0 bit means reflect)
+        stx CTRLPF
+                   
+        ; Visible part
+	; 7 lines of background color
+        ldx #0
+        stx PF0
+        stx PF1
+        stx PF2
+        REPEAT 7
+        	sta WSYNC
+        REPEND
+        
+	; 7 lines of yellow "line"
+        ldx #%11100000
+        stx PF0
+        ldx #$FF
+        stx PF1
+        stx PF2
+        REPEAT 7
+        	sta WSYNC
+        REPEND
+        
+
+	; 164 lines of yellow "wall pattern"	
+        ldx #%01100000
+        stx PF0
+        ldx #$00
+        stx PF1
+        ldx #%10000000
+        stx PF2
+                             
+        REPEAT 164
+        	sta WSYNC
+        REPEND
+       
+	; 7 lines of yellow "line" 
+        ldx #%11100000
+        stx PF0
+        ldx #$FF
+        stx PF1
+        stx PF2
+        REPEAT 7
+        	sta WSYNC
+        REPEND
+        
+	; 7 lines of background color
+        ldx #0
+        stx PF0
+        stx PF1
+        stx PF2
+        REPEAT 7
+        	sta WSYNC
+        REPEND
+        
+        ; OVERSCAN
+        lda #2
+        sta VBLANK
+        REPEAT 30
+        	sta WSYNC
+        REPEND
+        lda #0
+        sta VBLANK
+        
+        jmp NextFrame
+
+	org $fffc
+        .word Start	; reset vector
+        .word Start	; BRK vector
+
