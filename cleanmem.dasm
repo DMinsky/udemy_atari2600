@@ -1,0 +1,26 @@
+	processor 6502
+
+	seg code
+	org $f000
+
+Start:
+	sei	; Disable interruptions
+	cld	; Disable BCD
+	ldx #$ff
+	txs
+
+	; Fill zero page with zeros
+	; Zero page is RIOT RAM and TIA registers
+	; from 00 to FF
+	lda #0
+	tax
+ClearMemLoop:
+	sta #0,x
+	dex
+	bne ClearMemLoop
+
+	; Required by VCS
+	org $fffc
+	.word Start	; Reset vector
+	.word Start	; Interrupts vector
+
