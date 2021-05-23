@@ -1,0 +1,137 @@
+	processor 6502
+        include "vcs.h"
+        include "macro.h"
+
+	seg Code
+        org $f000
+
+Start:
+	CLEAN_START
+        ; Blue for background
+        lda #$80
+        sta COLUBK
+
+        ; Yellow for playfield. We only use it to draw a score here
+        lda #$1F
+        sta COLUPF
+
+        ; Red for player 0 bitmap
+        lda #$43
+        sta COLUP0
+
+        ; Red for player 1
+        lda #$af
+        sta COLUP1
+
+NextFrame:
+	lda #2
+        sta VSYNC
+        sta VBLANK
+        
+        ; Wait for VSYNC
+       	sta WSYNC
+        sta WSYNC
+        sta WSYNC
+        lda #0
+        sta VSYNC
+        
+        ; Wait for VBLANK
+        REPEAT 37
+        	sta WSYNC
+        REPEND
+        sta VBLANK
+        
+        ; Visible part
+	; 10 lines of background color
+        REPEAT 10
+        	sta WSYNC
+        REPEND
+        
+	; Score
+	ldx #0
+DrawScore:
+        ldy NumberTwo,X
+        sty PF1
+	sta WSYNC
+	inx
+	cpx #9
+	bne DrawScore
+	
+	lda #0
+	sta PF1
+
+	; Empty space with background color
+        REPEAT 20
+        	sta WSYNC
+        REPEND
+
+	; Player 0
+	; Set 2nd bit of NUSIZ0 to draw two Player0 sprites
+	ldx #%00000010
+	stx NUSIZ0
+	ldx #0
+Player0:
+        ldy PlayerSprite,X
+        sty GRP0
+	sta WSYNC
+	inx
+	cpx #9
+	bne Player0
+	lda #0
+	sta GRP0
+
+	; Player 1
+	ldx #0
+Player1:
+        ldy PlayerSprite,X
+        sty GRP1
+	sta WSYNC
+	inx
+	cpx #9
+	bne Player1
+	lda #0
+	sta GRP1
+
+        REPEAT 135
+        	sta WSYNC
+        REPEND
+       
+        ; OVERSCAN
+        lda #2
+        sta VBLANK
+        REPEAT 30
+        	sta WSYNC
+        REPEND
+        lda #0
+        sta VBLANK
+        
+        jmp NextFrame
+
+	org $ffea ; TODO
+PlayerSprite
+	.byte %01111110	;  ######
+	.byte %11111110	; ########
+	.byte %11011011	; ## ## ##
+	.byte %11111111	; ########
+	.byte %11111111	; ########
+	.byte %10111101	; # #### #
+	.byte %11000011	; ##    ##
+	.byte %11111111	; ########
+	.byte %01111110	;  ######
+
+	org $fff3
+NumberTwo
+	.byte %00001111	;     ####
+	.byte %00001111	;     ####
+	.byte %00000001 ;        #
+	.byte %00000001 ;        #
+	.byte %00001111 ;     ####
+	.byte %00001000 ;     #
+	.byte %00001000 ;     #
+	.byte %00001111 ;     ####
+	.byte %00001111	;     ####
+
+	org $fffc
+        .word Start	; reset vector
+        .word Start	; BRK vector
+
