@@ -1,0 +1,56 @@
+	processor 6502
+	include "vcs.h"
+	include "macro.h"
+
+	seg code
+	org $f000
+
+Start:
+	CLEAN_START	; Usual start routine defined in macro.h
+
+; Start a new fram by turnin on VBLANK and VSYNC
+NextFrame:
+	lda #2
+	sta VBLANK
+	sta VSYNC
+
+; Generate three lines for VSYNC
+	sta WSYNC
+	sta WSYNC
+	sta WSYNC
+	lda #0
+	sta VSYNC
+	
+; Generate 37 lines for the VBLANC
+	ldx #37
+VBlankLoop:
+	sta WSYNC
+	dex
+	bne VBlankLoop
+	sta VBLANK
+
+; Draw 192 visible scanlines
+	ldx #192
+VisibleLoop:
+	stx COLUBK	; Changing background color with every line
+	sta WSYNC
+	dex
+	bne VisibleLoop
+
+; Generate Overscan lines
+	lda #2
+	sta VBLANK
+	ldx #30
+
+OverscanLoop:
+	sta WSYNC
+	dex
+	bne OverscanLoop
+	sta VBLANK
+
+	jmp NextFrame
+
+	org $fffc
+	.word Start
+	.word Start
+
