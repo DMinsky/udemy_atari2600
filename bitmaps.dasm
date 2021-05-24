@@ -48,6 +48,8 @@ NextFrame:
         REPEND
         
 	; Score
+	lda #%00000010
+	sta CTRLPF
 	ldx #0
 DrawScore:
         ldy NumberTwo,X
