@@ -1,0 +1,102 @@
+	processor 6502
+	include "vcs.h"
+	include "macro.h"
+	
+	seg.u variables
+	org $80
+
+PlayerHeight	equ 9
+PlayerYPos	byte
+
+	seg code
+	org $f000
+
+Start:
+	sei
+	cld
+	ldx #$ff
+	txs
+
+	CLEAN_START
+	lda #50
+	sta PlayerYPos
+	lda #$aa
+	sta COLUBK
+
+NextFrame:
+	lda #2
+	sta VSYNC
+	sta VBLANK
+
+	sta WSYNC
+	sta WSYNC
+	sta WSYNC
+	lda #0
+	sta VSYNC
+	REPEAT 37
+		sta WSYNC
+	REPEND
+	sta VBLANK
+
+	ldy #192
+
+Scanline:
+	tya
+	; Here we check if current scanline is "inside" the apple sprite rect
+	; if it is we jump and draw the sprite
+	; if not we use a "zero" line inside the apple bitmap data
+	; and draw "an empty" sprite
+	sec
+	sbc PlayerYPos
+	cmp PlayerHeight
+	bcc DrawPlayer
+	lda #0
+
+DrawPlayer:
+	tax
+	lda Player,X
+	sta GRP0
+	lda PlayerColors,X
+	sta COLUP0
+
+	sta WSYNC
+
+	dey
+	bne Scanline
+
+	lda #2
+	sta VBLANK
+	REPEAT 30
+		sta WSYNC
+	REPEND
+	sta VBLANK
+
+	jmp NextFrame
+
+	org $ffea
+Player:
+	byte %00000000	;    
+	byte %00111100	;   ####  
+	byte %01111110	;  ######  
+	byte %11111111	; ########
+	byte %11111111	; ########
+	byte %11111111	; ########
+	byte %01111110	;  ###### 
+	byte %00010000	;    #    
+	byte %00111000	;   ###   
+
+PlayerColors:
+	byte $40	; Red gradient
+	byte $40	; Red gradient
+	byte $42	;
+	byte $44	;
+	byte $44	;
+	byte $48	;
+	byte $48	;
+	byte $ca	; Dark green
+	byte $c4	; Dark green
+
+	org $fffc
+	.word Start
+	.word Start
+	
