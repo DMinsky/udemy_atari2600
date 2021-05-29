@@ -36,6 +36,7 @@ NextFrame:
 	lda PlayerXPos
 	and #$7F	; kinda dump way to be sure PlayerXPos is positive
 
+	sec
 	sta WSYNC
 	sta HMCLR	; clear all the horizontal movement
 
@@ -48,7 +49,6 @@ NextFrame:
 	; sbs and bcs, 2 and 3 cycles
 	; and x3 because 1 CPU cycle is 3 TIA cycles
 	; Reminder goes to fine hpos value
-	sec
 DivideLoop:
 	sbc #15
 	bcs DivideLoop
