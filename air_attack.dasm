@@ -100,9 +100,23 @@ NoInput:
 	sta WSYNC
 	sta HMOVE
 
+MoveEnemy:
+	dec EnemyYPos
+	sec
+	lda EnemyYPos
+	cmp #0
+	bpl .NoNeedToReset
+	; If reached zero position -- reset
+	lda #96
+	sta EnemyYPos
+	; TODO also set a new horizontal position here
+.NoNeedToReset:
+
+
 	REPEAT 33
 		sta WSYNC
 	REPEND
+	lda #0
 	sta VBLANK
 
 	ldx #96
