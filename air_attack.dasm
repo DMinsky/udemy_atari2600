@@ -10,6 +10,7 @@ PlayerXPos	byte
 PlayerYPos	byte
 EnemyXPos	byte
 EnemyYPos	byte
+PAnimOffset	byte
 
 	seg code
 	org $F000
@@ -40,6 +41,7 @@ Frame:
 	REPEND
 	lda #0
 	sta VSYNC
+	sta PAnimOffset
 
 	lda #$AD
 	sta COLUBK
@@ -54,10 +56,8 @@ Frame:
 	lda #%00000001
 	sta CTRLPF
 
-	REPEAT 35
-		sta WSYNC
-	REPEND
-	sta VBLANK
+
+	sta WSYNC
 
 ; Read Input
 InputUp:
@@ -75,19 +75,35 @@ InputLeft:
 	bit SWCHA
 	bne InputRight
 	dec PlayerXPos
+	lda #16
+	sta PAnimOffset
 InputRight:
 	lda #%10000000
 	bit SWCHA
 	bne NoInput
 	inc PlayerXPos
+	lda #16
+	sta PAnimOffset
 NoInput:
+	sta WSYNC
 
 	lda PlayerXPos
 	ldy 0
 	jsr MoveHorizontal
+
+	sta WSYNC
+
 	lda EnemyXPos
 	ldy 1
 	jsr MoveHorizontal
+	
+	sta WSYNC
+	sta HMOVE
+
+	REPEAT 33
+		sta WSYNC
+	REPEND
+	sta VBLANK
 
 	ldx #96
 Line:
@@ -100,6 +116,8 @@ CheckPlayer:
 	lda #0
 
 DrawPlayer:
+	clc
+	adc PAnimOffset
 	tay
 	lda PlayerSpriteNormal,Y
 	sta GRP0
@@ -134,7 +152,7 @@ DrawEnemy:
 	jmp Frame
 
 ; X position in A register
-; X register is used for sprite choose
+; Y register is used for sprite choose
 ; 1 - HMP0 player 0
 ; 2 - HMP1 player 1
 ; 3 - HMM0 missile 0
@@ -142,6 +160,7 @@ DrawEnemy:
 ; 5 - HMBL ball
 MoveHorizontal subroutine
 	sta WSYNC
+	sec
 	; all this shit is about to position p0 sprite horizontally
 	; (x + 68) / 15 cycles waiting 
 	; x is TIA color cycles. Kinda pixels
@@ -194,7 +213,6 @@ PlayerSpriteTilt:
         .byte #%00010000;$AE
         .byte #%00010000;$AC
         .byte #%00010000;$F0
-        .byte #%00000000;$F8
 
 PlayerSpriteTiltColor:
         .byte #$00;
@@ -215,7 +233,6 @@ EnemySprite:
         .byte #%00101000;$42
         .byte #%01111100;$02
         .byte #%00010000;$40
-        .byte #%00000000;$40
 
 EnemySpriteColor
         .byte #$00;
@@ -226,7 +243,6 @@ EnemySpriteColor
         .byte #$42;
         .byte #$02;
         .byte #$40;
-
 
 EndOfSprites:
 
